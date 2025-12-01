@@ -1,14 +1,5 @@
 [
   {
-    "id": "6a4d9c5a-8f0b-4d18-a07c-f2fd67fdcef5",
-    "ticker": "USO",
-    "entry_price": 32.5,
-    "shares": 100.0,
-    "position_type": "UW",
-    "position_amount": 5.0,
-    "start_date": "2025-11-28T03:29:25.248200"
-  },
-  {
     "id": "54ff79a6-eaaf-411d-80df-13114b22ec26",
     "ticker": "SLV",
     "entry_price": 46.26,

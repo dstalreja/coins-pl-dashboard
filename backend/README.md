@@ -33,3 +33,19 @@ Edit `trades.json` to reflect the current open COINS trades:
 ```
 
 This is an educational tool for internal club use only and does not constitute trading or investment advice.
+
+
+To add trade (example, can use form too):
+curl -X POST http://127.0.0.1:5000/add-trade \
+  -H "Content-Type: application/json" \
+  -d '{"ticker":"SLV","entry_price":27.40,"shares":50,"position_type":"OW","position_amount":5}'
+
+To close trade (example):
+curl -X POST http://127.0.0.1:5000/api/close-trade \
+  -H "Content-Type: application/json" \
+  -d '{"ticker":"SLV"}'
+
+To delete trade (example):
+curl -X POST http://127.0.0.1:5000/api/delete-trade \
+  -H "Content-Type: application/json" \
+  -d '{"ticker":"SLV"}'

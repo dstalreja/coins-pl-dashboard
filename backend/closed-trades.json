@@ -34,5 +34,17 @@
     "closePrice": 31.84,
     "closeDate": "2025-11-28T04:09:47.847619",
     "closed": true
+  },
+  {
+    "id": "6a4d9c5a-8f0b-4d18-a07c-f2fd67fdcef5",
+    "ticker": "USO",
+    "entry_price": 32.5,
+    "shares": 100.0,
+    "position_type": "UW",
+    "position_amount": 5.0,
+    "start_date": "2025-11-28T03:29:25.248200",
+    "closePrice": 71.06,
+    "closeDate": "2025-12-01T22:41:12.668843",
+    "closed": true
   }
 ]
