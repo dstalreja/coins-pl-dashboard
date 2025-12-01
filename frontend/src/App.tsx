@@ -9,6 +9,7 @@ import { Card } from "./ui/card";
 import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
 import { useState, useEffect } from "react";
 import "./styles/globals.css";
+import { API_BASE_URL } from "./config";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -16,14 +17,14 @@ export default function App() {
   const [closedTrades, setClosedTrades] = useState([]); // ✅ NEW
 
   const refreshClosedTrades = () => { // ✅ NEW
-    fetch("http://127.0.0.1:5000/api/closed")
+    fetch(`${API_BASE_URL}/api/closed`)
       .then(res => res.json())
       .then(data => setClosedTrades(data))
       .catch(err => console.error("Error loading closed trades:", err));
   };
 
   const refreshTrades = () => {
-    fetch("http://127.0.0.1:5000/api/pl")
+    fetch(`${API_BASE_URL}/api/pl`)
       .then(res => res.json())
       .then(data => setTrades(data))
       .catch(err => console.error("Error loading trades:", err));

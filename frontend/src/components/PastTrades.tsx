@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "./ui/table";
 import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
+import { API_BASE_URL } from "../config";
 
 interface ClosedTrade {
   id: string;
@@ -28,7 +29,7 @@ export function PastTrades({ closedTrades = [] }: PastTradesProps) {
   const [historyTrades, setHistoryTrades] = useState<ClosedTrade[]>([]);
 
   const refreshClosedTrades = () => {
-    fetch("http://127.0.0.1:5000/api/closed")
+    fetch(`${API_BASE_URL}/api/closed`)
       .then((res) => res.json())
       .then((data) => {
         console.log("Closed trades received:", data);

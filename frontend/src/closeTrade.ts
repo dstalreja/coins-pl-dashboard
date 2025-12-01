@@ -1,4 +1,5 @@
 import fetch from "node-fetch"; // or native fetch in Node 18+
+import { API_BASE_URL } from "./config";
 
 async function closeTrade(ticker: string, closePrice?: number) {
   const body: any = { ticker };
@@ -8,7 +9,7 @@ async function closeTrade(ticker: string, closePrice?: number) {
     body.close_price = closePrice;
   }
 
-  const res = await fetch("http://127.0.0.1:5000/api/close-trade", {
+  const res = await fetch(`${API_BASE_URL}/api/close-trade`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

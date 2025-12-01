@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "./ui/table";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config";
 
 // Shape of what we actually render in the table
 interface Trade {
@@ -43,7 +44,7 @@ export function TradeTable() {
   useEffect(() => {
     const fetchPL = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/pl");
+        const res = await fetch(`${API_BASE_URL}/api/pl`);
         const data: ApiPLRow[] = await res.json();
 
         // Separate out any error rows (bad tickers, etc.)
