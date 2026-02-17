@@ -3,28 +3,32 @@ import { TradeTable } from "./components/TradeTable";
 import { SettingsPage } from "./components/SettingsPage";
 import { PortfolioAnalytics } from "./components/PortfolioAnalytics";
 import { PastTrades } from "./components/PastTrades";
-import { Card } from "./ui/card";
+import { Card } from "./components/ui/card";
+import { Button } from "./components/ui/button";
 
-
-import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
 import { useState, useEffect } from "react";
 import { ModeToggle } from "./components/mode-toggle";
 import "./styles/globals.css";
 import { API_BASE_URL } from "./config";
 
 import { Trade, ApiPLRow, ClosedTrade } from "./types";
+import { useAuth } from "./components/AuthProvider";
+import { GoogleLogin } from "@react-oauth/google";
+import { AddTradeDialog } from "./components/AddTradeDialog";
+import { Loader2, LogOut } from "lucide-react";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [errors, setErrors] = useState<ApiPLRow[]>([]); // ✅ Handle errors
+  const [errors, setErrors] = useState<ApiPLRow[]>([]);
   const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>([]);
+
+  const { user, login, logout, isAllowed, token } = useAuth();
 
   const refreshClosedTrades = () => {
     fetch(`${API_BASE_URL}/api/closed`)
       .then(res => res.json())
       .then((data) => {
-        // ✅ Convert backend data keys into interface shape
         const mapped: ClosedTrade[] = data.map((t: any) => ({
           id: t.id ?? crypto.randomUUID(),
           ticker: t.ticker,
@@ -48,12 +52,11 @@ export default function App() {
       const res = await fetch(`${API_BASE_URL}/api/pl`);
       const data: ApiPLRow[] = await res.json();
 
-      // Separate out any error rows (bad tickers, etc.)
       const goodRows = data.filter((row) => !row.error);
       const errorRows = data.filter((row) => row.error);
 
       const mapped: Trade[] = goodRows.map((row, idx) => ({
-        id: `${row.ticker}-${idx}`,
+        id: row.id || `${row.ticker}-${idx}`, // Backend should send ID now or fallback
         ticker: row.ticker,
         entryPrice: row.entry_price ?? 0,
         livePrice: row.live_price ?? row.entry_price ?? 0,
@@ -71,11 +74,31 @@ export default function App() {
     }
   };
 
+  const handleDeleteTrade = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/trades/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to delete trade");
+      }
+
+      refreshTrades();
+    } catch (error) {
+      console.error("Delete failed", error);
+      alert("Failed to delete trade");
+    }
+  };
+
   useEffect(() => {
     refreshTrades();
     refreshClosedTrades();
 
-    // Auto-refresh every 15s
     const interval = setInterval(refreshTrades, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -93,11 +116,44 @@ export default function App() {
 
       <main className="flex-1 overflow-auto relative z-10 p-8">
         {/* Persistent Top-Right Actions */}
-        <div className="absolute top-8 right-8 flex items-center gap-4 z-50">
+        <div className="flex justify-end items-center gap-4 mb-8">
+          {!user ? (
+            <div className="relative overflow-hidden rounded-full">
+              <GoogleLogin
+                onSuccess={credentialResponse => {
+                  if (credentialResponse.credential) {
+                    login(credentialResponse.credential);
+                  }
+                }}
+                onError={() => {
+                  console.log('Login Failed');
+                }}
+                theme="filled_black"
+                shape="pill"
+                text="signin_with"
+                size="medium"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 bg-secondary/50 backdrop-blur-sm border border-white/10 rounded-full px-1 pr-1 py-1 pl-4">
+              <span className="text-sm font-medium hidden sm:inline-block truncate max-w-[150px]">
+                {user.name || user.email}
+              </span>
+              {user.picture ? (
+                <img src={user.picture} alt="User" className="h-8 w-8 rounded-full border border-white/20" />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center border border-white/20">
+                  {user.name?.[0]?.toUpperCase() || "U"}
+                </div>
+              )}
+
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/20 hover:text-destructive" onClick={logout} title="Sign Out">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
           <ModeToggle />
-          <div className="h-10 w-10 rounded-full bg-secondary/50 backdrop-blur-sm border border-white/10 flex items-center justify-center">
-            <span className="text-sm font-medium">JD</span>
-          </div>
         </div>
 
         <div className="max-w-7xl mx-auto space-y-8">
@@ -114,23 +170,34 @@ export default function App() {
                     Live trading overview and portfolio metrics
                   </p>
                 </div>
+
+                {/* Add Trade Button (Only for Admins) */}
+                {isAllowed && (
+                  <AddTradeDialog onTradeAdded={refreshTrades} />
+                )}
               </div>
 
-              <TradeTable trades={trades} errors={errors} refreshTrades={refreshTrades} />
+              <TradeTable
+                trades={trades}
+                errors={errors}
+                refreshTrades={refreshTrades}
+                onDelete={handleDeleteTrade}
+                isAllowed={isAllowed}
+              />
             </>
           )}
+
+          {currentPage === "settings" && <SettingsPage />}
+
+          {currentPage === "analytics" && (
+            <PortfolioAnalytics trades={trades} />
+          )}
+
+          {currentPage === "past-trades" && (
+            <PastTrades closedTrades={closedTrades} />
+          )}
+
         </div>
-
-        {currentPage === "settings" && <SettingsPage />}
-
-        {currentPage === "analytics" && (
-          <PortfolioAnalytics trades={trades} />
-        )}
-
-        {currentPage === "past-trades" && (
-          <PastTrades closedTrades={closedTrades} />
-        )}
-
       </main>
     </div>
   );

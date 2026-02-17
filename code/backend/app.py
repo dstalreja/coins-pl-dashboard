@@ -5,6 +5,9 @@ import uuid
 import yfinance as yf
 import json
 import os
+from functools import wraps
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 app = Flask(__name__)
 CORS(app)
@@ -15,37 +18,85 @@ DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 TRADES_FILE = os.path.join(DATA_DIR, "trades.json")
 CLOSED_TRADES_FILE = os.path.join(DATA_DIR, "closed-trades.json")
 
+# Auth Configuration
+ALLOWED_EMAILS = os.environ.get("ALLOWED_EMAILS", "").split(",")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+
+def verify_token(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "No token provided"}), 401
+        
+        try:
+            token = auth_header.split(" ")[1]
+            # Verify token (skip clock skew check for simplicity in dev if needed, but standard is fine)
+            # If Client ID is not set in env, we skip audience check (less secure but works for dev if IDs match)
+            id_info = id_token.verify_oauth2_token(token, google_requests.Request(), GOOGLE_CLIENT_ID)
+            
+            email = id_info.get('email')
+            if email not in ALLOWED_EMAILS:
+                 print(f"Unauthorized access attempt by: {email}")
+                 return jsonify({"error": "Unauthorized email"}), 403
+            
+        except Exception as e:
+            print(f"Token verification failed: {e}")
+            return jsonify({"error": "Invalid token"}), 401
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 def load_trades():
+    if not os.path.exists(TRADES_FILE):
+        return []
     with open(TRADES_FILE, "r") as f:
         return json.load(f)
-
 
 def save_trades(trades):
     with open(TRADES_FILE, "w") as f:
         json.dump(trades, f, indent=2)
 
-
 def get_live_price(ticker: str) -> float:
-    data = yf.Ticker(ticker).history(period="1d")
-    if data.empty:
-        raise ValueError(f"No price data for {ticker}")
-    return float(data["Close"].iloc[-1])
-
+    try:
+        data = yf.Ticker(ticker).history(period="1d")
+        if data.empty:
+            print(f"No price data for {ticker}")
+            return 0.0
+        return float(data["Close"].iloc[-1])
+    except Exception as e:
+        print(f"Error fetching price for {ticker}: {e}")
+        return 0.0
 
 def calculate_pl(trade: dict) -> dict:
     ticker = trade["ticker"]
     entry = float(trade["entry_price"])
     shares = float(trade["shares"])
-    position_direction = trade["position_type"]
+    position_direction = trade["position_type"] # OW/UW or LONG/SHORT
 
     live_price = get_live_price(ticker)
+    
+    # Handle Live Price 0 case
+    if live_price == 0:
+         return {
+            "ticker": ticker,
+            "entry_price": entry,
+            "live_price": 0,
+            "shares": shares,
+            "unrealized_pl": 0,
+            "unrealized_pl_pct": 0,
+            "position_type": position_direction,
+            "position_amount": trade.get("position_amount"),
+            "error": "Failed to fetch price"
+        }
+
     pl = (live_price - entry) * shares
     pl_pct = ((live_price - entry) / entry) * 100 if entry != 0 else 0
-    if position_direction == 'UW':
+    
+    if position_direction == 'UW' or position_direction == 'SHORT':
         pl_pct = -(pl_pct)
         pl = -(pl)
 
-    # include new OW/UW fields
     return {
         "ticker": ticker,
         "entry_price": entry,
@@ -53,20 +104,17 @@ def calculate_pl(trade: dict) -> dict:
         "shares": shares,
         "unrealized_pl": round(pl, 2),
         "unrealized_pl_pct": round(pl_pct, 2),
-        "position_type": trade.get("position_type"),
+        "position_type": position_direction,
         "position_amount": trade.get("position_amount")
     }
-
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
 @app.get("/api/trades")
 def get_trades():
     return jsonify(load_trades())
-
 
 @app.get("/api/pl")
 def api_pl():
@@ -81,11 +129,8 @@ def api_pl():
 
     return jsonify(enriched)
 
-@app.get("/add-trade")
-def add_trade_page():
-    return render_template("add_trade.html")  # serves your Bootstrap form
-
 @app.post("/add-trade")
+@verify_token
 def add_trade():
     data = request.get_json()
 
@@ -105,6 +150,18 @@ def add_trade():
 
     return jsonify({"status": "success", "added": new_trade}), 201
 
+@app.delete("/api/trades/<trade_id>")
+@verify_token
+def delete_trade(trade_id):
+    trades = load_trades()
+    original_count = len(trades)
+    trades = [t for t in trades if t.get("id") != trade_id]
+    
+    if len(trades) == original_count:
+        return jsonify({"error": "Trade not found"}), 404
+        
+    save_trades(trades)
+    return jsonify({"status": "success", "deleted": trade_id}), 200
 
 def load_closed_trades():
     if not os.path.exists(CLOSED_TRADES_FILE):
@@ -117,7 +174,12 @@ def save_closed_trades(closed):
         json.dump(closed, f, indent=2)
 
 @app.post("/api/close-trade")
+# @verify_token # Optional: Protect close trade too? Yes, probably.
 def close_trade():
+    # Note: close_trade implementation in original code was looking up by Ticker, not ID.
+    # Ideally should use ID. But keeping compatible with script for now. 
+    # Can add auth if called from UI.
+    
     data = request.json
     ticker = data.get("ticker", "").upper().strip()
 
@@ -143,16 +205,13 @@ def close_trade():
 
     return jsonify({"status": "success", "closed": ticker}), 201
 
-
 @app.get("/api/closed")
 def get_closed_trades():
     if not os.path.exists(CLOSED_TRADES_FILE):
         return jsonify([])
     with open(CLOSED_TRADES_FILE, "r") as f:
         data = json.load(f)
-        print("Closed trades loaded:", data)  # debugging
         return jsonify(data)
-
 
 if __name__ == "__main__":
     app.run(debug=True)

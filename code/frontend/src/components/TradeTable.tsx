@@ -8,13 +8,29 @@ import {
 } from "./ui/table";
 import { Trade, ApiPLRow } from "../types";
 
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
+import { Button } from "./ui/button";
+
 interface TradeTableProps {
   trades: Trade[];
   errors: ApiPLRow[];
   refreshTrades: () => void;
+  onDelete?: (id: string) => Promise<void>;
+  isAllowed?: boolean;
 }
 
-export function TradeTable({ trades, errors, refreshTrades }: TradeTableProps) {
+export function TradeTable({ trades, errors, refreshTrades, onDelete, isAllowed }: TradeTableProps) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden shadow-2xl relative z-10">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none" />
@@ -29,6 +45,9 @@ export function TradeTable({ trades, errors, refreshTrades }: TradeTableProps) {
             <TableHead className="py-6 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Shares</TableHead>
             <TableHead className="py-6 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Unrealized P/L ($)</TableHead>
             <TableHead className="py-6 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Unrealized P/L (%)</TableHead>
+            {isAllowed && (
+              <TableHead className="py-6 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground text-right">Actions</TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -39,7 +58,7 @@ export function TradeTable({ trades, errors, refreshTrades }: TradeTableProps) {
               className="border-b border-white/5 text-destructive font-medium bg-destructive/5"
             >
               <TableCell className="py-4 px-8">{row.ticker}</TableCell>
-              <TableCell className="py-4 px-8" colSpan={6}>
+              <TableCell className="py-4 px-8" colSpan={isAllowed ? 7 : 6}>
                 Error: {row.error}
               </TableCell>
             </TableRow>
@@ -122,13 +141,43 @@ export function TradeTable({ trades, errors, refreshTrades }: TradeTableProps) {
                 <TableCell className="py-4 px-8">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${isPositive
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      : "bg-rose-500/10 text-rose-400 border-rose-500/20"
                       }`}
                   >
                     {plPercentText}
                   </span>
                 </TableCell>
+
+                {/* Actions */}
+                {isAllowed && (
+                  <TableCell className="py-4 px-8 text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-background border-border">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Trade?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the trade for <span className="font-semibold text-foreground">{trade.ticker}</span>.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => onDelete?.(trade.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

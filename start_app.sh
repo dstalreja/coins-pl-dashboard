@@ -37,6 +37,14 @@ else
     source venv/bin/activate
 fi
 
+# Export Backend Environment Variables from Frontend .env
+if [ -f "$PROJECT_ROOT/code/frontend/.env" ]; then
+    echo "Loading environment variables from frontend .env..."
+    export GOOGLE_CLIENT_ID=$(grep VITE_GOOGLE_CLIENT_ID "$PROJECT_ROOT/code/frontend/.env" | cut -d '=' -f2)
+    export ALLOWED_EMAILS=$(grep VITE_ALLOWED_EMAILS "$PROJECT_ROOT/code/frontend/.env" | cut -d '=' -f2)
+    echo "✅ Backend Configured."
+fi
+
 # Run Flask app in background
 echo "🚀 Starting Flask Backend..."
 python app.py &

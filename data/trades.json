@@ -7,5 +7,14 @@
     "position_type": "OW",
     "position_amount": 5.0,
     "start_date": "2025-11-28T15:59:30.955533"
+  },
+  {
+    "id": "359e0f5c-4ffa-4b0c-9a38-675c04f97e7c",
+    "ticker": "SLV",
+    "entry_price": 66.66,
+    "shares": 125.0,
+    "position_type": "OW",
+    "position_amount": 5.0,
+    "start_date": "2026-02-17T18:36:59.174587"
   }
 ]
