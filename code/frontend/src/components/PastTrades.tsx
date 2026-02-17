@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,57 +7,16 @@ import {
   TableRow,
 } from "./ui/table";
 import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
-import { API_BASE_URL } from "../config";
-
-interface ClosedTrade {
-  id: string;
-  ticker: string;
-  entryPrice: number;
-  closePrice: number;
-  shares: number;
-  weight: number;
-  closeDate: string;
-  closeTime: string;
-}
+import { ClosedTrade } from "../types";
 
 interface PastTradesProps {
   closedTrades: ClosedTrade[];
 }
 
-export function PastTrades({ closedTrades = [] }: PastTradesProps) {
-  const [historyTrades, setHistoryTrades] = useState<ClosedTrade[]>([]);
-
-  const refreshClosedTrades = () => {
-    fetch(`${API_BASE_URL}/api/closed`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Closed trades received:", data);
-        // ✅ Convert backend data keys into interface shape
-        const mapped = data.map((t: any) => ({
-          id: t.id ?? crypto.randomUUID(),
-          ticker: t.ticker,
-          entryPrice: t.entry_price ?? t.entryPrice,
-          closePrice: t.close_price ?? t.closePrice,
-          shares: t.shares,
-          weight: t.position_amount ?? t.weight ?? 0,
-          closeDate: t.close_date ?? t.closeDate,
-          closeTime: t.close_date 
-            ? new Date(t.close_date).toLocaleTimeString() 
-            : ""
-        }));
-        setHistoryTrades(mapped);
-      })
-      .catch((err) => console.error("Error loading closed trades:", err));
-  };
-
-  useEffect(() => {
-    refreshClosedTrades();
-    const interval = setInterval(refreshClosedTrades, 2000);
-    return () => clearInterval(interval);
-  }, []);
+export function PastTrades({ closedTrades }: PastTradesProps) {
 
   // ✅ Group by closeDate properly
-  const groupedTrades = historyTrades.reduce((groups, trade) => {
+  const groupedTrades = closedTrades.reduce((groups, trade) => {
     const dateKey = new Date(trade.closeDate).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -84,41 +42,56 @@ export function PastTrades({ closedTrades = [] }: PastTradesProps) {
   };
 
   return (
-    <div className="p-12">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-12">
-        <img
-          src={coinsLogo}
-          alt="COINS Logo"
-          className="w-16 h-16 rounded-full object-cover"
-        />
-        <h1 className="text-4xl">Past Trades</h1>
+      <div className="flex items-center gap-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
+          <img
+            src={coinsLogo}
+            alt="COINS Logo"
+            className="w-16 h-16 rounded-full object-cover relative z-10 border-2 border-primary/20"
+          />
+        </div>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">Past Trades</h1>
+          <p className="text-muted-foreground mt-1">Historical performance and closed positions</p>
+        </div>
       </div>
 
-      {historyTrades.length === 0 ? (
-        <p className="text-gray-500">No closed trades yet...</p>
+      {closedTrades.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md text-center">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <span className="text-2xl">📉</span>
+          </div>
+          <h3 className="text-xl font-semibold text-foreground">No closed trades yet</h3>
+          <p className="text-muted-foreground max-w-sm mt-2">Trades will appear here once they are closed in the backend.</p>
+        </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-12">
           {sortedDates.map((dateKey) => (
-            <div key={dateKey}>
-              <div className="mb-4">
-                <h2 className="text-2xl text-gray-900">{dateKey}</h2>
-                <div className="h-0.5 bg-gradient-to-r from-amber-500 to-transparent mt-2"></div>
+            <div key={dateKey} className="relative">
+              <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md py-4 mb-4 border-b border-white/10">
+                <h2 className="text-xl font-semibold text-foreground flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-primary/50" />
+                  {dateKey}
+                </h2>
               </div>
 
               {/* Trades Table for this date */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden shadow-sm relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 border-b border-gray-100">
-                      <TableHead className="py-6 px-8">Ticker</TableHead>
-                      <TableHead className="py-6 px-8">Entry Price</TableHead>
-                      <TableHead className="py-6 px-8">Close Price</TableHead>
-                      <TableHead className="py-6 px-8">Position</TableHead>
-                      <TableHead className="py-6 px-8">Shares</TableHead>
-                      <TableHead className="py-6 px-8">Realized P/L ($)</TableHead>
-                      <TableHead className="py-6 px-8">Realized P/L (%)</TableHead>
-                      <TableHead className="py-6 px-8">Close Time</TableHead>
+                    <TableRow className="border-b border-white/10 hover:bg-transparent">
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Ticker</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Entry Price</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Close Price</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Position</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Shares</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Realized P/L ($)</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Realized P/L (%)</TableHead>
+                      <TableHead className="py-4 px-8 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Close Time</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -127,43 +100,44 @@ export function PastTrades({ closedTrades = [] }: PastTradesProps) {
                       const isPositive = plDollar >= 0;
 
                       return (
-                        <TableRow key={trade.id} className="border-b border-gray-50">
-                          <TableCell className="py-6 px-8">
-                            <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-900 mr-3">
-                              {trade.ticker.charAt(0)}
+                        <TableRow key={trade.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                          <TableCell className="py-4 px-8">
+                            <span className="inline-flex items-center">
+                              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary mr-3 text-sm font-bold shadow-[0_0_10px_rgba(59,130,246,0.2)] border border-primary/20 group-hover:scale-110 transition-transform">
+                                {trade.ticker.charAt(0)}
+                              </span>
+                              <span className="text-foreground font-semibold tracking-tight">{trade.ticker}</span>
                             </span>
-                            <span className="text-gray-900">{trade.ticker}</span>
                           </TableCell>
-                          <TableCell className="py-6 px-8 text-gray-600">
+                          <TableCell className="py-4 px-8 text-muted-foreground font-mono text-sm">
                             ${trade.entryPrice.toFixed(2)}
                           </TableCell>
-                          <TableCell className="py-6 px-8 text-gray-900">
+                          <TableCell className="py-4 px-8 text-foreground font-mono text-sm font-medium">
                             ${trade.closePrice.toFixed(2)}
                           </TableCell>
-                          <TableCell className="py-6 px-8">
-                            {trade.weight}% {trade.position_type ?? ""}
+                          <TableCell className="py-4 px-8 text-muted-foreground text-xs uppercase tracking-wide">
+                            {trade.weight}% {trade.positionType ?? ""}
                           </TableCell>
-                          <TableCell className="py-6 px-8 text-gray-600">
+                          <TableCell className="py-4 px-8 text-muted-foreground font-mono text-sm">
                             {trade.shares}
                           </TableCell>
-                          <TableCell className="py-6 px-8">
-                            <span className={isPositive ? "text-green-600" : "text-red-600"}>
+                          <TableCell className="py-4 px-8">
+                            <span className={`font-mono font-medium ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                               {isPositive ? "+" : ""}${plDollar.toFixed(2)}
                             </span>
                           </TableCell>
-                          <TableCell className="py-6 px-8">
+                          <TableCell className="py-4 px-8">
                             <span
-                              className={`inline-flex items-center px-4 py-2 rounded-full ${
-                                isPositive
-                                  ? "bg-green-50 text-green-700"
-                                  : "bg-red-50 text-red-700"
-                              }`}
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${isPositive
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                                }`}
                             >
                               {isPositive ? "+" : ""}
                               {plPercent.toFixed(2)}%
                             </span>
                           </TableCell>
-                          <TableCell className="py-6 px-8 text-gray-500">
+                          <TableCell className="py-4 px-8 text-muted-foreground text-sm">
                             {trade.closeTime}
                           </TableCell>
                         </TableRow>

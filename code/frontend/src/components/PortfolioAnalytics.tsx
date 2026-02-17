@@ -5,17 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
 
-interface Trade {
-  id: string;
-  ticker: string;
-  entryPrice: number;
-  livePrice: number;
-  shares: number;
-  position_type: string;
-  position_amount: number;
-  unrealized_pl?: number;
-  unrealized_pl_pct?: number;
-}
+import { Trade } from "../types";
 
 interface PortfolioAnalyticsProps {
   trades: Trade[];
@@ -91,135 +81,143 @@ export function PortfolioAnalytics({ trades }: PortfolioAnalyticsProps) {
   };
 
   return (
-    <div className="p-12">
+    <div className="space-y-8 animate-in fade-in duration-500">
 
-      {/* HEADER (unchanged UI) */}
-      <div className="flex items-center gap-4 mb-12">
-        <img
-          src={coinsLogo}
-          alt="COINS Logo"
-          className="w-16 h-16 rounded-full object-cover"
-        />
-        <h1 className="text-4xl">Portfolio Analytics</h1>
+      {/* HEADER */}
+      <div className="flex items-center gap-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
+          <img
+            src={coinsLogo}
+            alt="COINS Logo"
+            className="w-16 h-16 rounded-full object-cover relative z-10 border-2 border-primary/20"
+          />
+        </div>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">Portfolio Analytics</h1>
+          <p className="text-muted-foreground mt-1">Deep dive into performance metrics and attribution</p>
+        </div>
+
       </div>
 
-      {/* PERFORMANCE CHART (unchanged UI) */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
-        <div className="flex gap-8 mb-6">
+      {/* PERFORMANCE CHART */}
+      <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
+        <div className="flex gap-8 mb-6 relative z-10">
           <div>
-            <span className="text-sm text-gray-500">COINS Portfolio</span>
-            <p className="text-xl" style={{ color: "#991B1B" }}>{formatCurrency(portfolioValue)}</p>
+            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">COINS Portfolio</span>
+            <p className="text-2xl font-bold text-foreground">{formatCurrency(portfolioValue)}</p>
           </div>
           <div>
-            <span className="text-sm text-gray-500">BCOM Benchmark</span>
-            <p className="text-xl" style={{ color: "#D97706" }}>{formatCurrency(benchmark)}</p>
+            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">BCOM Benchmark</span>
+            <p className="text-2xl font-bold text-muted-foreground">{formatCurrency(benchmark)}</p>
           </div>
         </div>
 
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis dataKey="date" stroke="#6B7280" style={{ fontSize: "12px" }} />
-            <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} tickFormatter={(v) => `$${v/1000}K`} />
-            <Tooltip formatter={(v: number) => formatCurrency(v)} />
-            <Legend />
-            <Line type="monotone" dataKey="COINS" stroke="#991B1B" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="BCOM" stroke="#D97706" strokeWidth={2} dot={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+            <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" style={{ fontSize: "12px" }} tickLine={false} axisLine={false} dy={10} />
+            <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: "12px" }} tickFormatter={(v) => `$${v / 1000}K`} tickLine={false} axisLine={false} dx={-10} />
+            <Tooltip
+              contentStyle={{ backgroundColor: 'rgba(3, 2, 19, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+              formatter={(v: number) => formatCurrency(v)}
+            />
+            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+            <Line type="monotone" dataKey="COINS" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#3b82f6', strokeWidth: 0 }} />
+            <Line type="monotone" dataKey="BCOM" stroke="#64748b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* SPREAD GRAPH (unchanged UI) */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
-        <h2 className="text-2xl mb-2">COINS - BCOM Spread</h2>
-        <p className="text-xl" style={{ color: "#7C2D12" }}>{formatCurrency(spread)}</p>
+      {/* DIVIDED ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis dataKey="date" stroke="#6B7280" style={{ fontSize: "12px" }} />
-            <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} tickFormatter={(v) => `$${v/1000}K`} />
-            <Tooltip formatter={(v: number) => formatCurrency(v)} />
-            <Legend />
-            <Line type="monotone" dataKey="spread" stroke="#7C2D12" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+        {/* SPREAD GRAPH */}
+        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-6 relative overflow-hidden">
+          <h2 className="text-lg font-semibold mb-1 text-foreground">COINS - BCOM Spread</h2>
+          <p className="text-3xl font-bold mb-6 text-emerald-400">{formatCurrency(spread)}</p>
 
-      {/* TOP HOLDINGS CHART (unchanged UI) */}
-      <Card className="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
-        <h2 className="text-2xl mb-6">Top Holdings</h2>
-        <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={holdingsForChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="ticker" stroke="#6B7280" style={{ fontSize: "14px" }} />
-                <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} tickFormatter={(v) => `$${v/1000}K`} />
-                <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                <Legend />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+              <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" style={{ fontSize: "12px" }} tickLine={false} axisLine={false} dy={10} />
+              <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: "12px" }} tickFormatter={(v) => `$${v / 1000}K`} tickLine={false} axisLine={false} dx={-10} />
+              <Tooltip
+                contentStyle={{ backgroundColor: 'rgba(3, 2, 19, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                formatter={(v: number) => formatCurrency(v)}
+              />
+              <Line type="monotone" dataKey="spread" stroke="#10b981" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* TOP HOLDINGS CHART */}
+        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-6 relative overflow-hidden">
+          <h2 className="text-lg font-semibold mb-6 text-foreground">Top Holdings</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={holdingsForChart} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={true} vertical={false} />
+              <XAxis type="number" hide />
+              <YAxis dataKey="ticker" type="category" stroke="rgba(255,255,255,0.8)" width={50} tickLine={false} axisLine={false} />
+              <Tooltip
+                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                contentStyle={{ backgroundColor: 'rgba(3, 2, 19, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                formatter={(v: number) => formatCurrency(v)}
+              />
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
                 {holdingsForChart.map((_e, i) => (
-                    <Cell key={i} fill={holdingColors[i % holdingColors.length]} />
+                  <Cell key={i} fill={["#3b82f6", "#8b5cf6", "#10b981"][i % 3]} />
                 ))}
-                </Bar>
+              </Bar>
             </BarChart>
-        </ResponsiveContainer>
-      </Card>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
-      {/* PERFORMANCE TABLE (original style preserved) */}
-    <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
-    <h2 className="text-2xl mb-6">Performance Attribution</h2>
+      {/* PERFORMANCE TABLE */}
+      <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-6 relative overflow-hidden">
+        <h2 className="text-xl font-semibold mb-6 text-foreground">Performance Attribution</h2>
 
-    <div className="overflow-x-auto">
-        <table className="w-full">
-        <thead>
-            <tr className="border-b border-gray-200">
-            <th className="text-left py-4 px-4">Division</th>
-            <th className="text-right py-4 px-4">Benchmark Absolute Performance</th>
-            <th className="text-right py-4 px-4">Relative Performance</th>
-            <th className="text-right py-4 px-4">Absolute Gain/Loss</th>
-            </tr>
-        </thead>
-        <tbody>
-            {Object.entries(divisionPerformance).map(([division, perf]) => (
-            <tr key={division} className="border-b border-gray-100">
-                <td className="py-4 px-4 font-medium">{division}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-4 px-4 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Division</th>
+                <th className="text-right py-4 px-4 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Benchmark Absolute Performance</th>
+                <th className="text-right py-4 px-4 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Relative Performance</th>
+                <th className="text-right py-4 px-4 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Absolute Gain/Loss</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {Object.entries(divisionPerformance).map(([division, perf]) => (
+                <tr key={division} className="group hover:bg-white/5 transition-colors">
+                  <td className="py-4 px-4 font-medium text-foreground">{division}</td>
 
-                {/* Styled cells (preserved colors + rounding + padding) */}
-                <td
-                className="text-right py-4 px-4 rounded-lg"
-                style={{
-                    backgroundColor: perf.benchmarkPerf < 0 ? "#FEE2E2" : "#D1FAE5",
-                    color: perf.benchmarkPerf < 0 ? "#991B1B" : "#065F46",
-                }}
-                >
-                {formatPercentage(perf.benchmarkPerf)}
-                </td>
+                  {/* Styled cells (preserved colors + rounding + padding) */}
+                  <td className="text-right py-4 px-4">
+                    <span className={`px-2 py-1 rounded-md text-sm font-medium ${perf.benchmarkPerf < 0 ? "bg-rose-500/10 text-rose-400" : "bg-emerald-500/10 text-emerald-400"}`}>
+                      {formatPercentage(perf.benchmarkPerf)}
+                    </span>
+                  </td>
 
-                <td
-                className="text-right py-4 px-4 rounded-lg"
-                style={{
-                    backgroundColor: perf.relativePerf < 0 ? "#FEE2E2" : "#D1FAE5",
-                    color: perf.relativePerf < 0 ? "#991B1B" : "#065F46",
-                }}
-                >
-                {formatPercentage(perf.relativePerf)}
-                </td>
+                  <td className="text-right py-4 px-4">
+                    <span className={`px-2 py-1 rounded-md text-sm font-medium ${perf.relativePerf < 0 ? "bg-rose-500/10 text-rose-400" : "bg-emerald-500/10 text-emerald-400"}`}>
+                      {formatPercentage(perf.relativePerf)}
+                    </span>
+                  </td>
 
-                <td
-                className="text-right py-4 px-4 rounded-lg"
-                style={{
-                    backgroundColor: perf.absoluteGainLoss < 0 ? "#FEE2E2" : "#D1FAE5",
-                    color: perf.absoluteGainLoss < 0 ? "#991B1B" : "#065F46",
-                }}
-                >
-                {formatCurrency(perf.absoluteGainLoss)}
-                </td>
-            </tr>
-            ))}
-        </tbody>
-        </table>
-    </div>
-    </div>
+                  <td className="text-right py-4 px-4">
+                    <span className={`font-mono ${perf.absoluteGainLoss < 0 ? "text-rose-400" : "text-emerald-400"}`}>
+                      {formatCurrency(perf.absoluteGainLoss)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
     </div>
   );
