@@ -69,6 +69,7 @@ def get_live_price(ticker: str) -> float:
         return 0.0
 
 def calculate_pl(trade: dict) -> dict:
+    trade_id = trade.get("id") # Get ID
     ticker = trade["ticker"]
     entry = float(trade["entry_price"])
     shares = float(trade["shares"])
@@ -79,6 +80,7 @@ def calculate_pl(trade: dict) -> dict:
     # Handle Live Price 0 case
     if live_price == 0:
          return {
+            "id": trade_id,
             "ticker": ticker,
             "entry_price": entry,
             "live_price": 0,
@@ -98,6 +100,7 @@ def calculate_pl(trade: dict) -> dict:
         pl = -(pl)
 
     return {
+        "id": trade_id,
         "ticker": ticker,
         "entry_price": entry,
         "live_price": round(live_price, 2),
@@ -174,36 +177,47 @@ def save_closed_trades(closed):
         json.dump(closed, f, indent=2)
 
 @app.post("/api/close-trade")
-# @verify_token # Optional: Protect close trade too? Yes, probably.
+@verify_token
 def close_trade():
-    # Note: close_trade implementation in original code was looking up by Ticker, not ID.
-    # Ideally should use ID. But keeping compatible with script for now. 
-    # Can add auth if called from UI.
-    
     data = request.json
-    ticker = data.get("ticker", "").upper().strip()
+    trade_id = data.get("trade_id")
+    manual_price = data.get("close_price") # Optional
 
-    with open(TRADES_FILE, "r") as f:
-        trades = json.load(f)
+    print(f"Closing trade: {trade_id}, Price: {manual_price}")
 
-    for t in trades:
-        if t["ticker"].upper() == ticker:
-            closed_trades = load_closed_trades()
-            closed_trades.append({
-                **t,
-                "closePrice": round(get_live_price(ticker), 2),
-                "closeDate": datetime.utcnow().isoformat(),
-                "closed": True
-            })
-            save_closed_trades(closed_trades)
-            break
+    if not trade_id:
+        return jsonify({"error": "Trade ID is required"}), 400
 
-    # remove from open trades
-    open_trades = [t for t in trades if t["ticker"].upper() != ticker]
-    with open(TRADES_FILE, "w") as f:
-        json.dump(open_trades, f, indent=2)
+    trades = load_trades()
+    target_trade = next((t for t in trades if t.get("id") == trade_id), None)
 
-    return jsonify({"status": "success", "closed": ticker}), 201
+    if not target_trade:
+        return jsonify({"error": "Trade not found"}), 404
+
+    # Determine Close Price
+    if manual_price:
+        close_price = float(manual_price)
+    else:
+        close_price = get_live_price(target_trade["ticker"])
+
+    # Create Closed Trade Record
+    closed_trade = {
+        **target_trade,
+        "closePrice": round(close_price, 2),
+        "closeDate": datetime.utcnow().isoformat(),
+        "closed": True
+    }
+
+    # Save to Closed History
+    closed_trades = load_closed_trades()
+    closed_trades.append(closed_trade)
+    save_closed_trades(closed_trades)
+
+    # Remove from Active Trades
+    remaining_trades = [t for t in trades if t.get("id") != trade_id]
+    save_trades(remaining_trades)
+
+    return jsonify({"status": "success", "closed": trade_id, "price": close_price}), 200
 
 @app.get("/api/closed")
 def get_closed_trades():

@@ -50,7 +50,7 @@ interface AddTradeDialogProps {
 
 export function AddTradeDialog({ onTradeAdded }: AddTradeDialogProps) {
     const [open, setOpen] = useState(false);
-    const { token } = useAuth();
+    const { token, logout } = useAuth();
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -78,6 +78,14 @@ export function AddTradeDialog({ onTradeAdded }: AddTradeDialogProps) {
                     position_amount: values.positionAmount,
                 }),
             });
+
+            if (res.status === 401) {
+                console.error("Token expired or invalid");
+                logout();
+                setOpen(false);
+                alert("Session expired. Please sign in again.");
+                return;
+            }
 
             if (!res.ok) {
                 const err = await res.json();

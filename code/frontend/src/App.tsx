@@ -15,6 +15,7 @@ import { Trade, ApiPLRow, ClosedTrade } from "./types";
 import { useAuth } from "./components/AuthProvider";
 import { GoogleLogin } from "@react-oauth/google";
 import { AddTradeDialog } from "./components/AddTradeDialog";
+import { PageTitle } from "./components/PageTitle";
 import { Loader2, LogOut } from "lucide-react";
 
 export default function App() {
@@ -82,6 +83,12 @@ export default function App() {
           "Authorization": `Bearer ${token}`
         }
       });
+
+      if (res.status === 401) {
+        logout();
+        alert("Session expired. Please sign in again.");
+        return;
+      }
 
       if (!res.ok) {
         const err = await res.json();
@@ -163,9 +170,7 @@ export default function App() {
               {/* Header Area */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">
-                    Dashboard
-                  </h1>
+                  <PageTitle title="Dashboard" />
                   <p className="text-muted-foreground mt-2">
                     Live trading overview and portfolio metrics
                   </p>

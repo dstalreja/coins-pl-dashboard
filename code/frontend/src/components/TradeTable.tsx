@@ -9,6 +9,7 @@ import {
 import { Trade, ApiPLRow } from "../types";
 
 import { Trash2 } from "lucide-react";
+import { CloseTradeDialog } from "./CloseTradeDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,30 +153,34 @@ export function TradeTable({ trades, errors, refreshTrades, onDelete, isAllowed 
                 {/* Actions */}
                 {isAllowed && (
                   <TableCell className="py-4 px-8 text-right">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-background border-border">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Trade?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the trade for <span className="font-semibold text-foreground">{trade.ticker}</span>.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => onDelete?.(trade.id)}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex justify-end gap-2">
+                      <CloseTradeDialog trade={trade} onTradeClosed={refreshTrades} />
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete Trade">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-background border-border">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Trade?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the trade for <span className="font-semibold text-foreground">{trade.ticker}</span>.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => onDelete?.(trade.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 )}
               </TableRow>

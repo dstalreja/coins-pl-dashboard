@@ -6,6 +6,7 @@ interface GoogleCredential {
     name: string;
     picture: string;
     sub: string; // Google ID
+    exp?: number;
 }
 
 interface AuthContextType {
@@ -29,6 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedToken) {
             try {
                 const decoded = jwtDecode<GoogleCredential>(storedToken);
+                const currentTime = Date.now() / 1000;
+
+                if (decoded.exp && decoded.exp < currentTime) {
+                    console.warn("Token expired, clearing session");
+                    localStorage.removeItem("google_token");
+                    return;
+                }
+
                 setUser(decoded);
                 setToken(storedToken);
                 checkAllowed(decoded.email);

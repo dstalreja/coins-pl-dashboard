@@ -6,6 +6,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
 
 import { Trade } from "../types";
+import { PageTitle } from "./PageTitle";
 
 interface PortfolioAnalyticsProps {
   trades: Trade[];
@@ -94,7 +95,7 @@ export function PortfolioAnalytics({ trades }: PortfolioAnalyticsProps) {
           />
         </div>
         <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">Portfolio Analytics</h1>
+          <PageTitle title="Portfolio Analytics" />
           <p className="text-muted-foreground mt-1">Deep dive into performance metrics and attribution</p>
         </div>
 

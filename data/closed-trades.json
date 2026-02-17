@@ -46,5 +46,29 @@
     "closePrice": 71.06,
     "closeDate": "2025-12-01T22:41:12.668843",
     "closed": true
+  },
+  {
+    "id": "f7419ef5-59f6-4222-9ac9-309b65d32e51",
+    "ticker": "TSLA",
+    "entry_price": 200.0,
+    "shares": 5.0,
+    "position_type": "OW",
+    "position_amount": 5.0,
+    "start_date": "2026-02-17T22:24:34.962512",
+    "closePrice": 410.63,
+    "closeDate": "2026-02-17T22:25:01.249634",
+    "closed": true
+  },
+  {
+    "id": "3455bb06-b4dd-46e4-b987-7040707f85a3",
+    "ticker": "SLV",
+    "entry_price": 68.3,
+    "shares": 54.0,
+    "position_type": "OW",
+    "position_amount": 5.0,
+    "start_date": "2026-02-17T22:27:13.548115",
+    "closePrice": 66.37,
+    "closeDate": "2026-02-17T22:27:17.453357",
+    "closed": true
   }
 ]

@@ -8,6 +8,7 @@ import {
 } from "./ui/table";
 import coinsLogo from "figma:asset/51a8b3c7d66d29fa88ccdc6ef32082b1f2273696.png";
 import { ClosedTrade } from "../types";
+import { PageTitle } from "./PageTitle";
 
 interface PastTradesProps {
   closedTrades: ClosedTrade[];
@@ -54,7 +55,7 @@ export function PastTrades({ closedTrades }: PastTradesProps) {
           />
         </div>
         <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">Past Trades</h1>
+          <PageTitle title="Past Trades" />
           <p className="text-muted-foreground mt-1">Historical performance and closed positions</p>
         </div>
       </div>
