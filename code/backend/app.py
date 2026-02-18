@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_cors import CORS
+from dotenv import load_dotenv
 from datetime import datetime
 import uuid
 import yfinance as yf
@@ -8,6 +9,8 @@ import os
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
