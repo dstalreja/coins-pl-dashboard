@@ -1,11 +1,29 @@
 [
   {
-    "id": "8684b4ab-2de0-4e5b-92ee-73b24b55f029",
+    "id": "iau-trade-2026-02-04",
+    "ticker": "IAU",
+    "entry_price": 90.96,
+    "shares": 115.0,
+    "position_type": "OW",
+    "position_amount": 5.0,
+    "start_date": "2026-02-04T00:00:00.000000"
+  },
+  {
+    "id": "slv-trade-2026-02-04",
     "ticker": "SLV",
-    "entry_price": 68.3,
+    "entry_price": 68.30,
     "shares": 54.0,
     "position_type": "OW",
     "position_amount": 5.0,
-    "start_date": "2026-02-17T22:19:42.790994"
+    "start_date": "2026-02-04T00:00:00.000000"
+  },
+  {
+    "id": "uso-trade-2026-02-12",
+    "ticker": "USO",
+    "entry_price": 76.39,
+    "shares": 111.0,
+    "position_type": "OW",
+    "position_amount": 5.0,
+    "start_date": "2026-02-12T00:00:00.000000"
   }
 ]
